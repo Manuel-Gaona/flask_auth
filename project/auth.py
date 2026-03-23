@@ -7,6 +7,8 @@ from flask_security.utils import login_user, logout_user
 from .models import User
 from . import db, user_datastore
 
+from flask import current_app
+
 # Creamos el blueprint con un prefijo /security
 auth = Blueprint('auth', __name__, url_prefix='/security')
 
@@ -25,11 +27,13 @@ def login_post():
     #Verificamos datos y si el usuario existe
     if not user or not check_password_hash(user.password, password):
         # Error loguin no valido
+        current_app.logger.warning(f'Intento de acceso fallido para: {email}')
         flash('El email o la contraseña son incorrectos')
         return redirect(url_for('auth.login'))
     
     # Creamos una sesioin y logueamos al usuario
     login_user(user, remember=remember)
+    current_app.logger.info(f'Acceso exitoso: ID {user.id} - {user.email}')
     return redirect(url_for('main.profile'))
 
 @auth.route('/register')
@@ -46,13 +50,17 @@ def register_post():
     user = User.query.filter_by(email=email).first()
     
     if user:
+        current_app.logger.warning(f'Intento de registro fallido para: {email}')    
         flash('El correo electronico ya esta registrado')
         return redirect(url_for('auth.register'))
     
-    user_datastore.create_user(name=name, email=email, 
+    nuevo_usuario = user_datastore.create_user(name=name, email=email, 
                                password=generate_password_hash(password, method='pbkdf2:sha256'))
     
+    user_datastore.add_role_to_user(nuevo_usuario, 'end-user')
+    
     db.session.commit()
+    current_app.logger.info(f'Registro exitoso para: {email}')
     return redirect(url_for('auth.login'))
 
 @auth.route('/logout')

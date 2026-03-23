@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template
 from flask_security import login_required, current_user
-from flask_security.decorators import roles_required
+from flask_security.decorators import roles_accepted
 from . import db
 
 main = Blueprint('main', __name__)
@@ -13,7 +13,7 @@ def index():
 # Ruta de la pagina de perfil
 @main.route('/profile')
 @login_required
-@roles_required('admin', 'end-user')
+@roles_accepted('admin', 'end-user')
 def profile():
     return render_template('profile.html', name=current_user.name)
 

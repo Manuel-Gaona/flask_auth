@@ -13,6 +13,9 @@ from flask_admin.contrib import sqla
 from werkzeug.security import generate_password_hash
 #Importamos la clase SQLAlchemy del módulo flask_sqlalchemy
 from flask_sqlalchemy import SQLAlchemy
+
+import logging
+from logging.handlers import RotatingFileHandler
  
 #Creamos una instancia de SQLAlchemy
 db = SQLAlchemy()
@@ -24,6 +27,16 @@ user_datastore = SQLAlchemyUserDatastore(db, User, Role)
 def create_app():
     #Creamos una instancia de Flask
     app = Flask(__name__)
+    
+    #configuracion del log
+    handler = RotatingFileHandler('error.log', maxBytes=10000, backupCount=3)
+    handler.setLevel(logging.INFO)
+    formatter = logging.Formatter('%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]')
+    handler.setFormatter(formatter)
+    app.logger.addHandler(handler)
+    
+    app.logger.info('Inicio de la aplicacion')
+    
    
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     #Generamos la clave aleatoria de sesión Flask para crear una cookie con la inf. de la sesión
